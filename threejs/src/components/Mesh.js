@@ -1,6 +1,11 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
-import GLTFLoader from 'three-gltf-loader';
+import OBJLoader from './OBJLoader';
+import MTLLoader from './MTLLoader';
+import obj from "./IronMan.obj";
+import mtl from "./IronMan.mtl";
+OBJLoader(THREE);
+MTLLoader(THREE);
 
 class Mesh extends Component{
   componentDidMount(){
@@ -15,53 +20,60 @@ class Mesh extends Component{
       0.1,
       1000
     )
-    this.camera.position.z = 4
+    
+
+    this.camera.position.z = 250
+
     //ADD RENDERER
-    this.renderer = new THREE.WebGLRenderer({ antialias: true })
-    this.renderer.setClearColor('#000000')
+    this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(width, height)
     this.mount.appendChild(this.renderer.domElement)
+
     //ADD CUBE
     const geometry = new THREE.BoxGeometry(1, 1, 1)
     const material = new THREE.MeshBasicMaterial({ color: '#433F81' })
     this.cube = new THREE.Mesh(geometry, material)
-    this.scene.add(this.cube)
-    this.renderer.render(this.scene, this.camera)
-    // var loadingManager = new THREE.LoadingManager();
-    // var loader = new THREE.ColladaLoader(loadingManager);
+    // this.scene.add(this.cube)
 
-    // let self = this;
-    // loader.load(
-    //   // resource URL
-    //   './medium_mesh_striker/scene.gltf',
-    //   // called when the resource is loaded
-    //   function ( gltf ) {
+    // hack here
+    this.THREE = THREE;
+
     
-    //     self.scene.add( gltf.scene );
+    var keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+    keyLight.position.set(-100, 0, 100);
     
-    //     // gltf.animations; // Array<THREE.AnimationClip>
-    //     // gltf.scene; // THREE.Scene
-    //     // gltf.scenes; // Array<THREE.Scene>
-    //     // gltf.cameras; // Array<THREE.Camera>
-    //     // gltf.asset; // Object
-    //     console.log("reach here");
-    //   },
-    //   // called while loading is progressing
-    //   function ( xhr ) {
+    var fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
+    fillLight.position.set(100, 0, 100);
     
-    //     console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    var backLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    backLight.position.set(100, 0, -100).normalize();
     
-    //   },
-    //   // called when loading has errors
-    //   function ( error ) {
-    
-    //     console.log( 'An error happened' );
-    
-    //   }
-    // );
+    this.scene.add(keyLight);
+    this.scene.add(fillLight);
+    this.scene.add(backLight);
+
+    let self = this;
+
+    var mtlLoader = new this.THREE.MTLLoader();
+    mtlLoader.setTexturePath('./');
+    mtlLoader.setPath('./');
+
+    mtlLoader.load(mtl, (materials) => {
+      materials.preload();
+
+      var objLoader = new this.THREE.OBJLoader();
+
+      objLoader.setMaterials(materials);
+      
+      objLoader.load(obj, (object) => {
+        console.log(object);
+        self.scene.add(object);
+        object.position.y -= 100;
+        self.renderer.render(self.scene, self.camera);
+      })
+    })
 
   }
-
 
   render(){
     return(
